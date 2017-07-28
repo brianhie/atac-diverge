@@ -7,15 +7,15 @@ then
     bin/main.sh
 fi
 
-#echo `date`" | Finding peaks with continental divergence..."
-#python bin/continental_variance.py target/pop_peak_"$TYPE".txt \
-#       > target/continental_variance/"$TYPE".txt
-#
-#echo `date`" | Separating divergence into African and European biased..."
-#awk '$5 > $6' target/continental_variance/"$TYPE".txt \
-#    > target/continental_variance/"$TYPE"_biased_afr.txt
-#awk '$5 < $6' target/continental_variance/"$TYPE".txt \
-#    > target/continental_variance/"$TYPE"_biased_eur.txt
+echo `date`" | Finding peaks with continental divergence..."
+python bin/continental_variance.py target/pop_peak_"$TYPE".txt \
+       > target/continental_variance/"$TYPE".txt
+
+echo `date`" | Separating divergence into African and European biased..."
+awk '$5 > $6' target/continental_variance/"$TYPE".txt \
+    > target/continental_variance/"$TYPE"_biased_afr.txt
+awk '$5 < $6' target/continental_variance/"$TYPE".txt \
+    > target/continental_variance/"$TYPE"_biased_eur.txt
 
 echo `date`" | Mapping peaks to rsIDs..."
 CONTINENTS=(afr eur)
