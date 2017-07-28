@@ -1,3 +1,5 @@
+import os.path
+import pickle
 import sys
 
 def closest_dist(snp_a, snp_b, distance):
@@ -79,13 +81,17 @@ def search_closest(distance, sorted_distances,
             )
         return closest, idx
 
-if __name__ == '__main__':
-    dbsnp_name = sys.argv[1]
-    peak_file_name = sys.argv[2]
+def load_snps(dbsnp_fname):
+    cached_fname = dbsnp_fname + '.pickle'
+    # Cache this file to speed up performance.
+    if os.path.isfile(cached_fname):
+        with open(cached_fname, 'rb') as cached_file:
+            snps = pickle.load(cached_file)
+        return snps
 
-    # Construct map from chromosome to a list of (position, rsID) tuples.
+    # Load a map from chromosomes to positions and rsIDs.
     snps = {}
-    with open(dbsnp_name, 'r') as dbsnp:
+    with open(dbsnp_fname, 'r') as dbsnp:
         for line in dbsnp:
             fields = line.rstrip().split('\t')
             chrom, pos, rsid = fields[0], int(fields[2]), fields[3]
@@ -94,12 +100,28 @@ if __name__ == '__main__':
             if not chrom in snps:
                 snps[chrom] = []
             snps[chrom].append((pos, rsid))
+
+    # Sort list of SNPs to enable binary search.
     for chrom in snps:
         snps[chrom] = sorted(snps[chrom])
 
+    # Cache the file.
+    with open(cached_fname, 'wb') as cached_file:
+        pickle.dump(snps, cached_file,
+                    protocol=pickle.HIGHEST_PROTOCOL)
+    return snps
+
+
+if __name__ == '__main__':
+    dbsnp_fname = sys.argv[1]
+    peak_fname = sys.argv[2]
+
+    # Construct map from chromosome to a list of (position, rsID) tuples.
+    snps = load_snps(dbsnp_fname)
+    
     # Iterate through peak file, finding the closest SNP to the middle of
     # the peak and reporting the rsID of that SNP.
-    with open(peak_file_name, 'r') as peak_file:
+    with open(peak_fname, 'r') as peak_file:
         for line in peak_file:
             fields = line.rstrip().split('\t')
             chrom, start, end = fields[0], int(fields[1]), int(fields[2])
