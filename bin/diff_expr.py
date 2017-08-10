@@ -1,6 +1,7 @@
 import gzip
 import json
 import numpy as np
+from scipy.stats import ttest_ind
 import sys
 
 def load_col(fname, col_pos, col_type=str):
@@ -46,10 +47,10 @@ if __name__ == '__main__':
     pops_fname = sys.argv[2]
     gene_fname = sys.argv[3]
 
-    with open(pops_fname, 'r') as pos_file:
+    with open(pops_fname, 'r') as pops_file:
         pops = json.loads(pops_file.read())
 
-    genes = load_col(gene_fname, _)
+    genes = load_col(gene_fname, 3)
 
     gene_to_expr = load_expr(expr_fname)
 
@@ -61,20 +62,23 @@ if __name__ == '__main__':
         
         pops_expr = []
         for p in range(len(pops)):
-            pop = pops[p]
+            pop = list(set(pops[str(p)]))
             pop_expr = []
-            for indiv in pops:
+            for indiv in pop:
                 if indiv in gene_to_expr[gene]:
                     pop_expr.append(float(gene_to_expr[gene][indiv]))
             pops_expr.append(pop_expr)
 
-        sys.stdout.write('{}'.format('gene'))
+        sys.stdout.write('{}'.format(gene))
         for pop_expr in pops_expr:
-            sys.stdout.write('\t{}/{}/{}'.format(
+            sys.stdout.write('\t{:.2f}|{:.2f}|{:.2f}'.format(
                 np.percentile(pop_expr, 25),
                 np.percentile(pop_expr, 50),
                 np.percentile(pop_expr, 75)
             ))
+        sys.stdout.write('\t{}'.format(
+            ttest_ind(pops_expr[0], pops_expr[1])[1]
+        ))
         sys.stdout.write('\n')
 
         
