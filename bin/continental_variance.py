@@ -31,7 +31,7 @@ if __name__ == '__main__':
             records.append(record)
 
     reject, _, _, _ = multipletests(
-        p_vals, alpha=0.1,
+        p_vals, alpha=0.05,
         #method='fdr_bh'
         method='bonferroni'
     )

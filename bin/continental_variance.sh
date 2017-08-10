@@ -18,11 +18,17 @@ awk '$5 < $6' target/continental_variance/"$TYPE".txt \
     > target/continental_variance/"$TYPE"_biased_eur.txt
 
 echo `date`" | Mapping peaks to rsIDs..."
+
+python bin/peak_to_rsid.py \
+       depict/data/trityper_CEU_hg19/SNPMappings.txt \
+       target/continental_variance/"$TYPE".txt \
+       > target/continental_variance/"$TYPE"_rsids.txt &
+
 CONTINENTS=(afr eur)
 for CONTINENT in ${CONTINENTS[@]}
 do
     python bin/peak_to_rsid.py \
-           data/snps_in_peaks.bed \
+           depict/data/trityper_CEU_hg19/SNPMappings.txt \
            target/continental_variance/"$TYPE"_biased_"$CONTINENT".txt \
            > target/continental_variance/"$TYPE"_biased_"$CONTINENT"_rsids.txt &
 done

@@ -94,7 +94,7 @@ def load_snps(dbsnp_fname):
     with open(dbsnp_fname, 'r') as dbsnp:
         for line in dbsnp:
             fields = line.rstrip().split('\t')
-            chrom, pos, rsid = fields[0], int(fields[2]), fields[3]
+            chrom, pos, rsid = fields[0], int(fields[1]), fields[2]
             if chrom.startswith('chr'):
                 chrom = chrom[len('chr'):]
             if not chrom in snps:
@@ -136,10 +136,10 @@ if __name__ == '__main__':
             closest_pos = closest[0]
             closest_rsid = closest[1]
 
-            # Only allow SNPs within the peak or within 100 bp of the
+            # Only allow SNPs within the peak or within 200 bp of the
             # middle of the peak.
             if start <= closest_pos <= end or \
-               abs(closest_pos - middle) <= 100:
+               abs(closest_pos - middle) <= 200:
                 print(closest_rsid)
                 # Draw without replacement.
                 snps[chrom].pop(closest_idx)

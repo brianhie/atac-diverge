@@ -38,6 +38,7 @@ import gzip
 import argparse
 from subprocess import check_output
 from collections import OrderedDict
+import numpy as np
 
 from tqdm import tqdm
 import logme
@@ -272,10 +273,8 @@ class Cluster(object):
         self.pop_to_max_height[peak.pop] = (
             peak.height / pop_to_total_reads[peak.pop]
         )
-        self.pop_to_reads = { pop: 0 for pop in ALL_POPS }
-        self.pop_to_reads[peak.pop] = (
-            peak.n_reads / pop_to_total_reads[peak.pop]
-        )
+        self.pop_to_reads = { pop: [] for pop in ALL_POPS }
+        self.pop_to_reads[peak.pop].append(peak.n_reads)
 
     def add(self, peak):
         """Add a peak to this cluster.
@@ -295,9 +294,7 @@ class Cluster(object):
             self.pop_to_max_height[peak.pop],
             peak.height / pop_to_total_reads[peak.pop]
         )
-        self.pop_to_reads[peak.pop] += (
-            peak.n_reads / pop_to_total_reads[peak.pop]
-        )
+        self.pop_to_reads[peak.pop].append(peak.n_reads)
 
     def write(self, outfile, reads_file=None, height_file=None):
         """Write self as a line to outfile.
@@ -333,7 +330,10 @@ class Cluster(object):
         outfile.write(
             '\t'.join(
                 [
-                    str(self.pop_to_reads[pop])
+                    str(np.median(self.pop_to_reads[pop]) /
+                        pop_to_total_reads[pop])
+                    if len(self.pop_to_reads[pop]) > 0
+                    else "0"
                     for pop in ALL_POPS
                 ]
             )
