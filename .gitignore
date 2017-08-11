@@ -2,3 +2,4 @@ depict/*
 target/*
 data/*
 bin/__pycache__
+temp*
