@@ -19,7 +19,7 @@ if __name__ == '__main__':
             vals_eur = [
                 pop_to_val[p] for p in EURO_POPS
             ]
-            
+
             t, p = ttest_ind(vals_afr, vals_eur)
             p_vals.append(p)
 

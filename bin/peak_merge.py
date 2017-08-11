@@ -485,7 +485,7 @@ def main(argv=None):
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # Optional arguments
-    parser.add_argument('-p', '--percent-overlap', metavar='',
+    parser.add_argument('-p', '--percent-overlap', metavar='', type=float,
                         help=('Overlap percentage to call single cluster,'
                               'default 0.75 (use decimal, e.g. .75 for 75 '
                               'percent.'))

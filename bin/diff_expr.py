@@ -50,7 +50,7 @@ if __name__ == '__main__':
     with open(pops_fname, 'r') as pops_file:
         pops = json.loads(pops_file.read())
 
-    genes = load_col(gene_fname, 3)
+    genes = load_col(gene_fname, 0)
 
     gene_to_expr = load_expr(expr_fname)
 
@@ -77,7 +77,8 @@ if __name__ == '__main__':
                 np.percentile(pop_expr, 75)
             ))
         sys.stdout.write('\t{}'.format(
-            ttest_ind(pops_expr[0], pops_expr[1])[1]
+            ttest_ind(pops_expr[0], pops_expr[1],
+                      equal_var=True)[1]
         ))
         sys.stdout.write('\n')
 
