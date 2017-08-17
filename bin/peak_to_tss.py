@@ -17,12 +17,7 @@ def load_tsss(tss_fname):
             tsss[chrom].append((tss, (ensid, symbol)))
     return tsss
 
-if __name__ == '__main__':
-    tss_fname = sys.argv[1]
-    peak_fname = sys.argv[2]
-
-    tsss = load_tsss(tss_fname)
-
+def peak_to_tss(tsss, peak_fname):
     with open(peak_fname, 'r') as peak_file:
         for line in peak_file:
             fields = line.rstrip().split('\t')
@@ -44,9 +39,8 @@ if __name__ == '__main__':
             tss_pos = closest_pos
             while tss_idx < len(tsss[chrom]) and \
                   tss_pos - middle <= 100000:
-                print('{}:{}-{}\t{}\t{}\t{}'
-                      .format(chrom, start, end, tss_pos,
-                              ensid, symbol))
+                yield (chrom, start, end, tss_pos,
+                       ensid, symbol)
                 tss_idx += 1
                 tss_pos = tsss[chrom][tss_idx][0]
                 ensid, symbol = tsss[chrom][tss_idx][1]
@@ -56,10 +50,18 @@ if __name__ == '__main__':
             tss_pos = tsss[chrom][tss_idx][0]
             while tss_idx >= 0 and \
                   middle - tss_pos <= 100000:
-                print('{}:{}-{}\t{}\t{}\t{}'
-                      .format(chrom, start, end, tss_pos,
-                              ensid, symbol))
+                yield (chrom, start, end, tss_pos,
+                       ensid, symbol)
                 tss_idx -= 1
                 tss_pos = tsss[chrom][tss_idx][0]
                 ensid, symbol = tsss[chrom][tss_idx][1]
                 
+if __name__ == '__main__':
+    tss_fname = sys.argv[1]
+    peak_fname = sys.argv[2]
+
+    tsss = load_tsss(tss_fname)
+
+    for (chrom, start, end, tss_pos,
+         ensid, symbol) in peak_to_tss(tssss, peak_fname):
+        pass
