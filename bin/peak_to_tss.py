@@ -1,5 +1,6 @@
 import sys
 
+from diff_expr import load_expr
 from peak_to_rsid import search_closest
 
 def load_tsss(tss_fname):
@@ -22,6 +23,7 @@ def peak_to_tss(tsss, peak_fname):
         for line in peak_file:
             fields = line.rstrip().split('\t')
             chrom, start, end = fields[0], int(fields[1]), int(fields[2])
+            pops = [ float(f) for f in fields[3:] ]
             if chrom.startswith('chr'):
                 chrom = chrom[len('chr'):]
             middle = (start + end) / 2
@@ -39,8 +41,8 @@ def peak_to_tss(tsss, peak_fname):
             tss_pos = closest_pos
             while tss_idx < len(tsss[chrom]) and \
                   tss_pos - middle <= 100000:
-                yield (chrom, start, end, tss_pos,
-                       ensid, symbol)
+                yield (chrom, start, end, pops,
+                       tss_pos, ensid, symbol)
                 tss_idx += 1
                 tss_pos = tsss[chrom][tss_idx][0]
                 ensid, symbol = tsss[chrom][tss_idx][1]
@@ -50,8 +52,8 @@ def peak_to_tss(tsss, peak_fname):
             tss_pos = tsss[chrom][tss_idx][0]
             while tss_idx >= 0 and \
                   middle - tss_pos <= 100000:
-                yield (chrom, start, end, tss_pos,
-                       ensid, symbol)
+                yield (chrom, start, end, pops,
+                       tss_pos, ensid, symbol)
                 tss_idx -= 1
                 tss_pos = tsss[chrom][tss_idx][0]
                 ensid, symbol = tsss[chrom][tss_idx][1]
@@ -59,9 +61,12 @@ def peak_to_tss(tsss, peak_fname):
 if __name__ == '__main__':
     tss_fname = sys.argv[1]
     peak_fname = sys.argv[2]
+    expr_fname = sys.argv[3]
 
     tsss = load_tsss(tss_fname)
 
-    for (chrom, start, end, tss_pos,
-         ensid, symbol) in peak_to_tss(tssss, peak_fname):
-        pass
+    gene_to_expr = load_expr(expr_fname)
+
+    for (chrom, start, end, pops,
+         tss_pos, ensid, symbol) in peak_to_tss(tsss, peak_fname):
+        
