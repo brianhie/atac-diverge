@@ -46,4 +46,3 @@ if __name__ == '__main__':
     for p in range(len(p_vals)):
         if reject[p]:
             print('\t'.join([ str(f) for f in records[p] ]))
-            
