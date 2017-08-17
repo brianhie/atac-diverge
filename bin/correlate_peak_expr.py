@@ -1,15 +1,19 @@
 import json
 import numpy as np
-from scipy.stats import spearmar
+from scipy.stats import spearmanr
+from statsmodels.stats.multitest import multipletests
 import sys
 
 from diff_expr import load_expr
 from peak_merge import ALL_POPS
 from peak_to_rsid import search_closest
 
-GEUVADIS_POPS = [ "CEU", "FIN", "GBR", "TSI", "YRI" ]
-EXPR_AGG = np.median
+GEUVADIS_POPS = [ 'CEU', 'FIN', 'TSI', 'YRI' ]
+EXPR_AGG = np.mean # np.median
 CORR_TYPE = spearmanr
+P_VAL_CUTOFF = 0.05
+MULTI_TEST_METHOD = 'bonferroni'
+DIST_CUTOFF = 50000
 
 def load_tsss(tss_fname):
     tsss = {}
@@ -24,6 +28,11 @@ def load_tsss(tss_fname):
             if not chrom in tsss:
                 tsss[chrom] = []
             tsss[chrom].append((tss, (ensid, symbol)))
+
+    # Sort for binary search.
+    for chrom in tsss:
+        tsss[chrom] = sorted(tsss[chrom])
+            
     return tsss
 
 def peak_to_tss(tsss, peak_fname):
@@ -46,33 +55,26 @@ def peak_to_tss(tsss, peak_fname):
 
             # Forward search for TSSs within distance cutoff.
             tss_idx = closest_idx
-            tss_pos = closest_pos
             while tss_idx < len(tsss[chrom]) and \
-                  tss_pos - middle <= 100000:
-                yield (chrom, start, end, pops,
-                       tss_pos, ensid, symbol)
-                tss_idx += 1
-                tss_pos = tsss[chrom][tss_idx][0]
+                  tsss[chrom][tss_idx][0] - middle <= DIST_CUTOFF:
                 ensid, symbol = tsss[chrom][tss_idx][1]
+                yield (chrom, start, end, pops,
+                       tsss[chrom][tss_idx][0], ensid, symbol)
+                tss_idx += 1
 
             # Backward search.
             tss_idx = closest_idx - 1
-            tss_pos = tsss[chrom][tss_idx][0]
             while tss_idx >= 0 and \
-                  middle - tss_pos <= 100000:
-                yield (chrom, start, end, pops,
-                       tss_pos, ensid, symbol)
-                tss_idx -= 1
-                tss_pos = tsss[chrom][tss_idx][0]
+                  middle - tsss[chrom][tss_idx][0] <= DIST_CUTOFF:
                 ensid, symbol = tsss[chrom][tss_idx][1]
+                yield (chrom, start, end, pops,
+                       tsss[chrom][tss_idx][0], ensid, symbol)
+                tss_idx -= 1
 
-def pop_expr(gene_to_expr, pops, pop_name):
-    expr = []
-    for indiv in pops[pop_name]:
-        if indiv in gene_to_expr[gene]:
-            expr.append(float(gene_to_expr[gene][indiv]))
-    return expr
-    
+def pop_expr(gene_expr, pops, pop_name):
+    return [ float(gene_expr[indiv])
+             for indiv in pops[pop_name]
+             if indiv in gene_expr ]
                 
 if __name__ == '__main__':
     tss_fname = sys.argv[1]
@@ -87,23 +89,36 @@ if __name__ == '__main__':
 
     gene_to_expr = load_expr(expr_fname)
 
+    pop_to_idx = {}
+    for pop_name in GEUVADIS_POPS:
+        pop_to_idx[pop_name] = ALL_POPS.index(pop_name)
+
     p_vals = []
     records = []
-    for (chrom, start, end, pops,
+    for (chrom, start, end, pop_peaks,
          tss_pos, ensid, symbol) in peak_to_tss(tsss, peak_fname):
+        
+        if not ensid in gene_to_expr:
+            continue
+        
         peak_scores = []
         expr_values = []
         for pop_name in GEUVADIS_POPS:
-            idx = ALL_POPS.index(pop_name)
-            peak_scores.append(pops[idx])
+            peak_scores.append(pop_peaks[pop_to_idx[pop_name]])
             expr_values.append(
-                EXPR_AGG(pop_expr(gene_to_expr, pops, pop_name))
+                EXPR_AGG(pop_expr(gene_to_expr[ensid], pops, pop_name))
             )
+
+        # Exclude list of all zeros since the correlation is undefined in
+        # this case.
+        if all(x == 0 for x in peak_scores) or \
+           all(x == 0 for x in expr_values):
+            continue
 
         rho, p = CORR_TYPE(peak_scores, expr_values)
         p_vals.append(p)
         records.append([
-            chrom, start, end, tss_pos, ensid, symbol
+            chrom, start, end, tss_pos, ensid, symbol, rho, p
         ] + peak_scores + expr_values)
 
     reject, _, _, _ = multipletests(
