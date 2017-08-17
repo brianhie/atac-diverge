@@ -31,8 +31,8 @@ wait
 echo `date`" | Running DEPICT..."
 for CONTINENT in ${CONTINENTS[@]}
 do
-    cp target/continental_variance/"$TYPE"_biased_"$CONTINENT"_rsids.txt \
-       depict/testfiles/"$TYPE"_biased_"$CONTINENT"_rsids.txt
+    cut -f1 target/continental_variance/"$TYPE"_biased_"$CONTINENT"_rsids.txt \
+        > depict/testfiles/"$TYPE"_biased_"$CONTINENT"_rsids.txt
     (
         cd depict;
         ./depict.py "$TYPE"_biased_"$CONTINENT" continental_variance

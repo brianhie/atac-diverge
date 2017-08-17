@@ -8,7 +8,7 @@ def closest_dist(snp_a, snp_b, distance):
     else:
         return snp_b, 1
 
-# Implements a binary search on a tuple of (distances, QTLs), where the
+# Implements a binary search on a tuple of (distances, genes), where the
 # user specifies a `distance' and we query `sorted_distances' for one of
 # its elements with the closest distance.
 # Implemented using base indices and lengths in order to not use Python's
@@ -81,43 +81,16 @@ def search_closest(distance, sorted_distances,
             )
         return closest, idx
 
-def load_snps(dbsnp_fname):
-    cached_fname = dbsnp_fname + '.pickle'
-    # Cache this file to speed up performance.
-    if os.path.isfile(cached_fname):
-        with open(cached_fname, 'rb') as cached_file:
-            snps = pickle.load(cached_file)
-        return snps
-
-    # Load a map from chromosomes to positions and rsIDs.
-    snps = {}
-    with open(dbsnp_fname, 'r') as dbsnp:
-        for line in dbsnp:
-            fields = line.rstrip().split('\t')
-            chrom, pos, rsid = fields[0], int(fields[1]), fields[2]
-            if chrom.startswith('chr'):
-                chrom = chrom[len('chr'):]
-            if not chrom in snps:
-                snps[chrom] = []
-            snps[chrom].append((pos, rsid))
-
-    # Sort list of SNPs to enable binary search.
-    for chrom in snps:
-        snps[chrom] = sorted(snps[chrom])
-
-    # Cache the file.
-    with open(cached_fname, 'wb') as cached_file:
-        pickle.dump(snps, cached_file,
-                    protocol=pickle.HIGHEST_PROTOCOL)
-    return snps
+def load_genes(genes_fname):
 
 
 if __name__ == '__main__':
-    dbsnp_fname = sys.argv[1]
+    genes_fname = sys.argv[1]
     peak_fname = sys.argv[2]
 
-    # Construct map from chromosome to a list of (position, rsID) tuples.
-    snps = load_snps(dbsnp_fname)
+    # Construct map from chromosome to a list of (position, ensemblID)
+    # tuples.
+    genes = load_genes(genes_fname)
     
     # Iterate through peak file, finding the closest SNP to the middle of
     # the peak and reporting the rsID of that SNP.
@@ -130,18 +103,17 @@ if __name__ == '__main__':
             middle = (start + end) / 2
 
             # Search for SNP that is closest to the middle of the peak.
-            closest, closest_idx = search_closest(middle, snps[chrom])
+            closest, closest_idx = search_closest(middle, genes[chrom])
             assert(closest != None)
-            assert(closest == snps[chrom][closest_idx])
+            assert(closest == genes[chrom][closest_idx])
             closest_pos = closest[0]
             closest_rsid = closest[1]
 
-            # Only allow SNPs within the peak or within 200 bp of the
-            # middle of the peak.
+            # Only allow genes with TSS in the peak or within 200 bp of
+            # the middle of the peak.
             if start <= closest_pos <= end or \
-               abs(closest_pos - middle) <= 200:
-                print('{}\t{}:{}-{}'
-                      .format(closest_rsid, chrom, start, end))
+               abs(closest_pos - middle) <= 1000:
+                print(closest_rsid)
                 # Draw without replacement.
-                snps[chrom].pop(closest_idx)
+                genes[chrom].pop(closest_idx)
 
