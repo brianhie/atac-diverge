@@ -8,35 +8,41 @@ then
     bin/main.sh
 fi
 
-echo `date`" | Finding peaks with outlier population..."
-python bin/outlier_european.py target/pop_peak_"$TYPE".txt $OUTLIER_POP \
-       > target/outlier_european/"$TYPE".txt
+#echo `date`" | Finding peaks with outlier population..."
+#python bin/outlier_european.py target/pop_peak_"$TYPE".txt $OUTLIER_POP \
+#       > target/outlier_european/"$TYPE".txt
+#
+#echo `date`" | Separating based on bias..."
+#awk '$5 > $6' target/outlier_european/"$TYPE".txt \
+#    > target/outlier_european/"$TYPE"_biased_"$OUTLIER_POP".txt
+#awk '$5 < $6' target/outlier_european/"$TYPE".txt \
+#    > target/outlier_european/"$TYPE"_biased_eur.txt
 
-echo `date`" | Separating based on bias..."
-awk '$5 > $6' target/outlier_european/"$TYPE".txt \
-    > target/outlier_european/"$TYPE"_biased_"$OUTLIER_POP".txt
-awk '$5 < $6' target/outlier_european/"$TYPE".txt \
-    > target/outlier_european/"$TYPE"_biased_eur.txt
-
-echo `date`" | Mapping peaks to rsIDs..."
+echo `date`" | Mapping peaks to TSSs..."
 POPS=($OUTLIER_POP eur)
 for POP in ${POPS[@]}
 do
-    python bin/peak_to_rsid.py \
-           depict/data/trityper_CEU_hg19/SNPMappings.txt \
-           target/outlier_european/"$TYPE"_biased_"$POP".txt \
-           > target/outlier_european/"$TYPE"_biased_"$POP"_rsids.txt &
-done
-wait
-
-echo `date`" | Running DEPICT..."
-for POP in ${POPS[@]}
-do
-    cut -f1 target/outlier_european/"$TYPE"_biased_"$POP"_rsids.txt \
-        > depict/testfiles/"$TYPE"_biased_"$POP"_rsids.txt
     (
-        cd depict;
-        ./depict.py "$TYPE"_biased_"$POP" outlier_european
+        cat target/outlier_european/"$TYPE"_biased_"$POP".txt | \
+            sed 's/\t/\./' | sed 's/\t/\./' | \
+            sort -k1,1 \
+                 > temp_"$TYPE"_"$POP"-outlier_european.txt.1
+
+        cat target/pop_peak_"$TYPE".txt | \
+            sed 's/\t/\./' | sed 's/\t/\./' | \
+            sort -k1,1 | \
+            join - temp_"$TYPE"_"$POP"-outlier_european.txt.1 | \
+            sed 's/\./\t/' | sed 's/\./\t/' | sed 's/ /\t/g' \
+                > temp_"$TYPE"_"$POP"-outlier_european.txt.2
+        
+        python bin/correlate_peak_expr.py \
+               data/genes_unique.txt \
+               temp_"$TYPE"_"$POP"-outlier_european.txt.2 \
+               /godot/geuvadis/expression_analysis_results/GD462.GeneQuantRPKM.50FN.samplename.resk10.txt.gz \
+               conf/geuvadis_pops.json \
+               > target/outlier_european/"$TYPE"_biased_"$POP"_genes.txt
+
+        rm -rf temp_"$TYPE"_"$POP"-*
     ) &
 done
 wait

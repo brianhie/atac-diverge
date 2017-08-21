@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     with open(pops_fname, 'r') as pops_file:
         pops = json.loads(pops_file.read())
-
+        
     genes = load_col(gene_fname, 0)
 
     gene_to_expr = load_expr(expr_fname)

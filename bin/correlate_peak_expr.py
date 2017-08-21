@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, pearsonr
 from statsmodels.stats.multitest import multipletests
 import sys
 
@@ -10,9 +10,9 @@ from peak_to_rsid import search_closest
 
 GEUVADIS_POPS = [ 'CEU', 'FIN', 'TSI', 'YRI' ]
 EXPR_AGG = np.mean # np.median
-CORR_TYPE = spearmanr
+CORR_TYPE = pearsonr
 P_VAL_CUTOFF = 0.05
-MULTI_TEST_METHOD = 'bonferroni'
+MULTI_TEST_METHOD = 'fdr_bh'
 DIST_CUTOFF = 50000
 
 def load_tsss(tss_fname):
@@ -127,5 +127,5 @@ if __name__ == '__main__':
     )
 
     for p in range(len(p_vals)):
-        if reject[p]:
-            print('\t'.join([ str(f) for f in records[p] ]))
+#        if reject[p]:
+        print('\t'.join([ str(f) for f in records[p] ]))
