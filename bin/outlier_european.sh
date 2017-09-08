@@ -8,15 +8,15 @@ then
     bin/main.sh
 fi
 
-#echo `date`" | Finding peaks with outlier population..."
-#python bin/outlier_european.py target/pop_peak_"$TYPE".txt $OUTLIER_POP \
-#       > target/outlier_european/"$TYPE".txt
-#
-#echo `date`" | Separating based on bias..."
-#awk '$5 > $6' target/outlier_european/"$TYPE".txt \
-#    > target/outlier_european/"$TYPE"_biased_"$OUTLIER_POP".txt
-#awk '$5 < $6' target/outlier_european/"$TYPE".txt \
-#    > target/outlier_european/"$TYPE"_biased_eur.txt
+echo `date`" | Finding peaks with outlier population..."
+python bin/outlier_european.py target/pop_peak_"$TYPE".txt $OUTLIER_POP \
+       > target/outlier_european/"$TYPE".txt
+
+echo `date`" | Separating based on bias..."
+awk '$5 > $6' target/outlier_european/"$TYPE".txt \
+    > target/outlier_european/"$TYPE"_biased_"$OUTLIER_POP".txt
+awk '$5 < $6' target/outlier_european/"$TYPE".txt \
+    > target/outlier_european/"$TYPE"_biased_eur.txt
 
 echo `date`" | Mapping peaks to TSSs..."
 POPS=($OUTLIER_POP eur)

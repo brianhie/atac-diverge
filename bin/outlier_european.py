@@ -5,7 +5,7 @@ import sys
 
 from compare_pops import EURO_POPS, AFRO_POPS, iter_peaks
 
-P_VAL_CUTOFF = 0
+P_VAL_CUTOFF = 0.05
 MULTI_TEST_METHOD = 'bonferroni'
 
 if __name__ == '__main__':
